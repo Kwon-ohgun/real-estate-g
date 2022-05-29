@@ -8,28 +8,33 @@
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=11d4464a3c939f573ecb89d5d09e3876&libraries=services"></script>
 </head>
+<style>
+body {
+    margin: 0;
+}
+</style>
 <body>
-    <div id="map" style="width:500px;height:400px;"></div>
-    <button onclick="migration()">저장</button>
-    <button onclick="offset()">테스트: 좌표 API</button>
+    <div id="map" style="width:400px;height:850px;"></div>
+    <!-- <button onclick="migration()">저장</button>
+    <button onclick="offset()">테스트: 좌표 API</button> -->
 </body>
 </html>
 <script>
+const startMap = function() {}
 let congresses;
 var mapContainer = document.getElementById('map'), // 지도를 표시할 div 
     mapOption = {
-        center: new kakao.maps.LatLng(33.450701, 126.570667), // 지도의 중심좌표
-        level: 3 // 지도의 확대 레벨
+        center: new kakao.maps.LatLng(37.53190827313679, 126.91416237338858), // 지도의 중심좌표
+        level: 7 // 지도의 확대 레벨
     };  
 
 // // 지도를 생성합니다    
 var map = new kakao.maps.Map(mapContainer, mapOption); 
 
-// var map = new kakao.maps.Map(mapContainer, mapOption); // 지도를 생성합니다
 
 // // 지도 확대 축소를 제어할 수 있는  줌 컨트롤을 생성합니다
-// var zoomControl = new kakao.maps.ZoomControl();
-// map.addControl(zoomControl, kakao.maps.ControlPosition.RIGHT);
+var zoomControl = new kakao.maps.ZoomControl();
+map.addControl(zoomControl, kakao.maps.ControlPosition.RIGHT);
 
 // // 지도가 확대 또는 축소되면 마지막 파라미터로 넘어온 함수를 호출하도록 이벤트를 등록합니다
 // kakao.maps.event.addListener(map, 'zoom_changed', function() {        
@@ -104,7 +109,32 @@ const addressToOffset = function(asset) {
     });    
 };
 
+// 마커 생성
+const showMarker = function(asset) {
+    console.log(asset.value);
+    var coords = new kakao.maps.LatLng(asset.y, asset.x);
+    
+    var marker = new kakao.maps.Marker({
+        map: map, // 마커를 표시할 지도
+        position: coords,
+        title : asset.value // 마커의 타이틀, 마커에 마우스를 올리면 타이틀이 표시됩니다 
+    });
+
+    // 라벨 표시
+    // 인포윈도우로 장소에 대한 설명을 표시합니다
+    var infowindow = new kakao.maps.InfoWindow({
+         content: '<div style="width:300px;text-align:center;padding:16px;">' + asset.value + '</div>',
+         removable: true
+    });
+    kakao.maps.event.addListener(marker, 'click', function() {
+      // 마커 위에 인포윈도우를 표시합니다
+      infowindow.open(map, marker);  
+      map.setCenter(coords);
+    });
+}
+
 axios.get('https://real-estate-g-default-rtdb.firebaseio.com/congresses.json').then((response) => {
+    
     congresses = response.data;
     console.log(congresses);
     congresses.forEach(function(congress) {
@@ -115,12 +145,13 @@ axios.get('https://real-estate-g-default-rtdb.firebaseio.com/congresses.json').t
         // 내 자산
         congress.assetsMy && congress.assetsMy.forEach(function(asset) {
             // console.log(asset);
-            addressToOffset(asset);
+            // addressToOffset(asset);
+            showMarker(asset);
         });
         // 가족
         congress.assetsMyRelative && congress.assetsMyRelative.forEach(function(asset) {
             // console.log(asset);
-            addressToOffset(asset);
+            // addressToOffset(asset);
         }); 
     });
 });
@@ -140,5 +171,14 @@ const offset = function() {
                 console.warn(response.data.documents[0].x);
                 console.warn(response.data.documents[0].y);
             });
+}
+
+const webFunction = function(width, height) {
+    // alert(width, height);
+    // alert(height);
+    document.getElementById('map').style.width = width + 'px';
+    document.getElementById('map').style.height = height + 'px';
+    map.relayout();
+    // alert(height);
 }
 </script>
