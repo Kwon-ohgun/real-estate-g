@@ -11,7 +11,7 @@
 <body>
     <div id="map" style="width:500px;height:400px;"></div>
     <button onclick="migration()">저장</button>
-    <button onclick="test()">테스트</button>
+    <button onclick="offset()">테스트: 좌표 API</button>
 </body>
 </html>
 <script>
@@ -54,6 +54,9 @@ const addressToOffset = function(asset) {
         console.log(asset.addrees, status);    
         // 정상적으로 검색이 완료됐으면 
         if (status === kakao.maps.services.Status.OK) {
+            // x, y값 db에 넣기
+            asset.x = result[0].x;
+            asset.y = result[0].y;
             var coords = new kakao.maps.LatLng(result[0].y, result[0].x);
 
             // 결과값으로 받은 위치를 마커로 표시합니다
@@ -78,28 +81,49 @@ const addressToOffset = function(asset) {
                 addreesSplit.splice(addreesSplit.length-1, 1);
                 asset.addrees = addreesSplit.join(' ');
             }
+            // 주소를 넣어서 좌표값을 받는 통신
+            // axios.get('http://dapi.kakao.com/v2/local/search/keyword?query=' + asset.addrees, {
+            //     header: {
+            //         Authorization: 'KakaoAK af42af0dc7cd046c2d38bef4284bb0e4'
+            //     }
+            // }).then((response) => {
+            //     console.warn(response);
+            // });
+            axios.get('http://dapi.kakao.com/v2/local/search/keyword?query=' + asset.addrees, {
+                headers: {
+                    Authorization: 'KakaoAK af42af0dc7cd046c2d38bef4284bb0e4'
+                }
+            }).then((response) => {
+                console.warn(asset);
+                console.warn(response.data.documents[0].x);
+                console.warn(response.data.documents[0].y);
+                asset.x = response.data.documents[0].x;
+                asset.y = response.data.documents[0].y;
+            });
         }
     });    
 };
 
-// axios.get('https://real-estate-g-default-rtdb.firebaseio.com/congresses.json').then((response) => {
-//     congresses = response.data;
-//     console.log(congresses);
-//     congresses.forEach(function(congress) {
-//         console.log(congress.assetsMy);
-//         if (!congress.assetsMy) {
-//             console.warn(congress);
-//         }
-//         congress.assetsMy && congress.assetsMy.forEach(function(asset) {
-//             // console.log(asset);
-//             addressToOffset(asset);
-//         }); 
-//         // congress.assetsMyRelative && congress.assetsMyRelative.forEach(function(asset) {
-//         //     // console.log(asset);
-//         //     addressToOffset(asset);
-//         // }); 
-//     });
-// });
+axios.get('https://real-estate-g-default-rtdb.firebaseio.com/congresses.json').then((response) => {
+    congresses = response.data;
+    console.log(congresses);
+    congresses.forEach(function(congress) {
+        console.log(congress.assetsMy);
+        if (!congress.assetsMy) {
+            console.warn(congress);
+        }
+        // 내 자산
+        congress.assetsMy && congress.assetsMy.forEach(function(asset) {
+            // console.log(asset);
+            addressToOffset(asset);
+        });
+        // 가족
+        congress.assetsMyRelative && congress.assetsMyRelative.forEach(function(asset) {
+            // console.log(asset);
+            addressToOffset(asset);
+        }); 
+    });
+});
 
 const migration = function() {
     console.log(congresses);
@@ -107,9 +131,14 @@ const migration = function() {
     axios.put('https://real-estate-g-default-rtdb.firebaseio.com/congresses.json', congresses);
 }
 
-const test = function() {
-    addressToOffset({
-        addrees: '서울특별시 동작구 사당동 태평빌라'
-    });
+const offset = function() {
+    axios.get('http://dapi.kakao.com/v2/local/search/keyword?query=서울특별시 동작구 사당동 태평빌라', {
+                headers: {
+                    Authorization: 'KakaoAK af42af0dc7cd046c2d38bef4284bb0e4'
+                }
+            }).then((response) => {
+                console.warn(response.data.documents[0].x);
+                console.warn(response.data.documents[0].y);
+            });
 }
 </script>
