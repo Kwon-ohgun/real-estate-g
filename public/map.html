@@ -14,7 +14,12 @@ body {
 }
 </style>
 <body>
-    <div id="map" style="width:400px;height:850px;"></div>
+    <div style="position: relative;">
+        <div id="map" style="width:400px;height:850px;"></div>
+        <div id="searchBar" style="position: absolute; top: 16px; left: 16px; z-index: 1; display: none;">
+            <input id="searchBarInput" type="text" style="width: 320px; height: 24px;">
+        </div>
+    </div>
     <!-- <button onclick="migration()">저장</button>
     <button onclick="offset()">테스트: 좌표 API</button> -->
 </body>
@@ -173,12 +178,18 @@ const offset = function() {
             });
 }
 
+let mobileWidth = null;
 const webFunction = function(width, height) {
     // alert(width, height);
-    // alert(height);
+    mobileWidth = width;
     document.getElementById('map').style.width = width + 'px';
     document.getElementById('map').style.height = height + 'px';
     map.relayout();
     // alert(height);
 }
+
+const webFunctionSearch = function(show) {
+    document.getElementById('searchBar').style.display = show ? 'block' : 'none';    
+    document.getElementById('searchBarInput').style.width = mobileWidth * 0.8 + 'px';    
+};
 </script>
