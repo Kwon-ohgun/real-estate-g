@@ -115,8 +115,8 @@ const addressToOffset = function(asset) {
 };
 
 // 마커 생성
-const showMarker = function(asset) {
-    console.log(asset.value);
+const showMarker = function(congress, asset, relative) {
+    console.log(asset);
     var coords = new kakao.maps.LatLng(asset.y, asset.x);
     
     var marker = new kakao.maps.Marker({
@@ -128,7 +128,7 @@ const showMarker = function(asset) {
     // 라벨 표시
     // 인포윈도우로 장소에 대한 설명을 표시합니다
     var infowindow = new kakao.maps.InfoWindow({
-         content: '<div style="width:300px;text-align:center;padding:16px;">' + asset.value + '</div>',
+         content: '<div style="width:300px;text-align:center;padding:16px;">' + congress.name + '(' + congress.team + ')' + relative + ': ' + asset.value + '</div>',
          removable: true
     });
     kakao.maps.event.addListener(marker, 'click', function() {
@@ -151,12 +151,13 @@ axios.get('https://real-estate-g-default-rtdb.firebaseio.com/congresses.json').t
         congress.assetsMy && congress.assetsMy.forEach(function(asset) {
             // console.log(asset);
             // addressToOffset(asset);
-            showMarker(asset);
+            showMarker(congress, asset, '');
         });
         // 가족
         congress.assetsMyRelative && congress.assetsMyRelative.forEach(function(asset) {
             // console.log(asset);
             // addressToOffset(asset);
+            showMarker(congress, asset, '(' + asset.relative + ')');
         }); 
     });
 });
