@@ -36,7 +36,6 @@ var mapContainer = document.getElementById('map'), // 지도를 표시할 div
 // // 지도를 생성합니다    
 var map = new kakao.maps.Map(mapContainer, mapOption); 
 
-
 // // 지도 확대 축소를 제어할 수 있는  줌 컨트롤을 생성합니다
 var zoomControl = new kakao.maps.ZoomControl();
 map.addControl(zoomControl, kakao.maps.ControlPosition.RIGHT);
@@ -139,7 +138,8 @@ const showMarker = function(congress, asset, relative) {
 }
 
 axios.get('https://real-estate-g-default-rtdb.firebaseio.com/congresses.json').then((response) => {
-    
+    // 엡에 사이즈 변경 메시지 전달
+    window.ReactNativeWebView.postMessage('mapSize');
     congresses = response.data;
     console.log(congresses);
     congresses.forEach(function(congress) {
@@ -181,16 +181,16 @@ const offset = function() {
 
 let mobileWidth = null;
 const webFunction = function(width, height) {
-    // alert(width, height);
+    // alert(width);
+    // alert(height);
     mobileWidth = width;
     document.getElementById('map').style.width = width + 'px';
     document.getElementById('map').style.height = height + 'px';
     map.relayout();
-    // alert(height);
 }
 
 const webFunctionSearch = function(show) {
     document.getElementById('searchBar').style.display = show ? 'block' : 'none';    
-    document.getElementById('searchBarInput').style.width = mobileWidth * 0.8 + 'px';    
+    document.getElementById('searchBarInput').style.width = mobileWidth * 0.8 + 'px';
 };
 </script>
