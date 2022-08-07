@@ -50,7 +50,7 @@ body {
             </form>
             <ul id="searchListParent" class="searchList"></ul>
             <ul style="display: none;">
-                <li id="searchListChild"><spa>abc</spa></li>
+                <li id="searchListChild"></li>
             </ul>
         </div>
     </div>
@@ -242,10 +242,16 @@ const search = function(form) {
     searchListParent.innerHTML = '';
     searchListParent.classList.add('active');
     const searchListChild = document.getElementById('searchListChild');
-    for (let i = 0; i < 5; i++) {
+    console.log(congresses);
+    for (let i = 0; i < congresses.length; i++) {
+        const congress = congresses[i];
+        // 팀에서 못찾고 이름에서도 못찾고
+        if (!congress.team.includes(searchInput.value) && !congress.name.includes(searchInput.value)) {
+            continue;
+        }
         const newSearchListChild = searchListChild.cloneNode(true);
         searchListParent.appendChild(newSearchListChild);
-
+        newSearchListChild.innerHTML = congress.team;
     }
 };
 </script>
