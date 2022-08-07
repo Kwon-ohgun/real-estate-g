@@ -3,20 +3,249 @@
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- <meta name="viewport" content="width=device-width, initial-scale=1.0"> -->
+    <meta name="viewport" content="initial-scale=1.0,user-scalable=no,maximum-scale=1,width=device-width">
     <title>Document</title>
-    <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=11d4464a3c939f573ecb89d5d09e3876"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=11d4464a3c939f573ecb89d5d09e3876&libraries=services"></script>
 </head>
+<style>
+body {
+    margin: 0;
+}
+.searchList {
+    margin: 0;
+    background-color: white;
+    border: 1px solid black;
+    border-top: 0;
+    list-style: none;
+    padding-left: 0;
+    height: 300px;
+    overflow-x: hidden;
+    overflow-y: scroll;
+    box-sizing: border-box;
+    display: none;
+}
+.searchList.active {
+    display: block;
+}
+.searchList li {
+    padding-left: 8px;
+    padding-right: 8px;
+}
+.searchBarInput {
+    width: 100%;
+    height: 24px;
+    box-sizing: border-box;
+    border-radius: 0;
+    border: 1px solid black;
+}
+</style>
 <body>
-    <div id="map" style="width:500px;height:400px;"></div>
+    <div style="position: relative;">
+        <div id="map" style="width:400px;height:850px;"></div>
+        <div id="searchBar" style="position: absolute; top: 16px; left: 16px; z-index: 1; display: none;">
+            <form id="searchBarForm" onsubmit="event.preventDefault(); search(this);">
+                <input name="searchBarInput" id="searchBarInput" class="searchBarInput" type="text">
+            </form>
+            <ul id="searchListParent" class="searchList"></ul>
+            <ul style="display: none;">
+                <li id="searchListChild"><spa>abc</spa></li>
+            </ul>
+        </div>
+    </div>
+    <!-- <button onclick="migration()">저장</button>
+    <button onclick="offset()">테스트: 좌표 API</button> -->
 </body>
 </html>
 <script>
-var container = document.getElementById('map'); //지도를 담을 영역의 DOM 레퍼런스
-var options = { //지도를 생성할 때 필요한 기본 옵션
-	center: new kakao.maps.LatLng(33.450701, 126.570667), //지도의 중심좌표.
-	level: 3 //지도의 레벨(확대, 축소 정도)
+const startMap = function() {}
+let congresses;
+var mapContainer = document.getElementById('map'), // 지도를 표시할 div 
+    mapOption = {
+        center: new kakao.maps.LatLng(37.53190827313679, 126.91416237338858), // 지도의 중심좌표
+        level: 7 // 지도의 확대 레벨
+    };  
+
+// // 지도를 생성합니다    
+var map = new kakao.maps.Map(mapContainer, mapOption); 
+
+// // 지도 확대 축소를 제어할 수 있는  줌 컨트롤을 생성합니다
+var zoomControl = new kakao.maps.ZoomControl();
+map.addControl(zoomControl, kakao.maps.ControlPosition.RIGHT);
+
+// // 지도가 확대 또는 축소되면 마지막 파라미터로 넘어온 함수를 호출하도록 이벤트를 등록합니다
+// kakao.maps.event.addListener(map, 'zoom_changed', function() {        
+    
+//     // 지도의 현재 레벨을 얻어옵니다
+//     var level = map.getLevel();
+    
+//     var message = '현재 지도 레벨은 ' + level + ' 입니다';
+//     var resultDiv = document.getElementById('result');  
+//     resultDiv.innerHTML = message;
+    
+// });
+
+// 주소-좌표 변환 객체를 생성합니다
+var geocoder = new kakao.maps.services.Geocoder();
+
+const addressToOffset = function(asset) {
+    // 주소로 좌표를 검색합니다
+    console.log(asset.addrees);
+    geocoder.addressSearch(asset.addrees, function(result, status) {
+
+        console.log(asset.addrees, status);    
+        // 정상적으로 검색이 완료됐으면 
+        if (status === kakao.maps.services.Status.OK) {
+            // x, y값 db에 넣기
+            asset.x = result[0].x;
+            asset.y = result[0].y;
+            var coords = new kakao.maps.LatLng(result[0].y, result[0].x);
+
+            // 결과값으로 받은 위치를 마커로 표시합니다
+            var marker = new kakao.maps.Marker({
+                map: map,
+                position: coords
+            });
+
+            // 인포윈도우로 장소에 대한 설명을 표시합니다
+            var infowindow = new kakao.maps.InfoWindow({
+                content: '<div style="width:150px;text-align:center;padding:6px 0;">' + asset.addrees + '</div>'
+            });
+            infowindow.open(map, marker);
+
+            // 지도의 중심을 결과값으로 받은 위치로 이동시킵니다
+            map.setCenter(coords);
+        } else {
+            const addrees = asset.addrees;
+            const addreesSplit = addrees.split(' ');
+            if (addreesSplit[addreesSplit.length-1] === '건물' || addreesSplit[addreesSplit.length-1] === '대지') {
+                debugger;
+                addreesSplit.splice(addreesSplit.length-1, 1);
+                asset.addrees = addreesSplit.join(' ');
+            }
+            // 주소를 넣어서 좌표값을 받는 통신
+            // axios.get('http://dapi.kakao.com/v2/local/search/keyword?query=' + asset.addrees, {
+            //     header: {
+            //         Authorization: 'KakaoAK af42af0dc7cd046c2d38bef4284bb0e4'
+            //     }
+            // }).then((response) => {
+            //     console.warn(response);
+            // });
+            axios.get('http://dapi.kakao.com/v2/local/search/keyword?query=' + asset.addrees, {
+                headers: {
+                    Authorization: 'KakaoAK af42af0dc7cd046c2d38bef4284bb0e4'
+                }
+            }).then((response) => {
+                console.warn(asset);
+                console.warn(response.data.documents[0].x);
+                console.warn(response.data.documents[0].y);
+                asset.x = response.data.documents[0].x;
+                asset.y = response.data.documents[0].y;
+            });
+        }
+    });    
 };
 
-var map = new kakao.maps.Map(container, options); //지도 생성 및 객체 리턴
+// 마커 생성
+const showMarker = function(congress, asset, relative) {
+    console.log(asset);
+    var coords = new kakao.maps.LatLng(asset.y, asset.x);
+    
+    var marker = new kakao.maps.Marker({
+        map: map, // 마커를 표시할 지도
+        position: coords,
+        title : asset.value // 마커의 타이틀, 마커에 마우스를 올리면 타이틀이 표시됩니다 
+    });
+
+    // 라벨 표시
+    // 인포윈도우로 장소에 대한 설명을 표시합니다
+    var infowindow = new kakao.maps.InfoWindow({
+         content: '<div style="width:300px;text-align:center;padding:16px;">' + congress.name + '(' + congress.team + ')' + relative + ': ' + asset.value + '</div>',
+         removable: true
+    });
+    kakao.maps.event.addListener(marker, 'click', function() {
+      // 마커 위에 인포윈도우를 표시합니다
+      infowindow.open(map, marker);  
+      map.setCenter(coords);
+    });
+}
+
+axios.get('https://real-estate-g-default-rtdb.firebaseio.com/congresses.json').then((response) => {
+    // 엡에 사이즈 변경 메시지 전달
+    window.ReactNativeWebView && window.ReactNativeWebView.postMessage('mapSize');
+    congresses = response.data;
+    console.log(congresses);
+    congresses.forEach(function(congress) {
+        console.log(congress.assetsMy);
+        if (!congress.assetsMy) {
+            console.warn(congress);
+        }
+        // 내 자산
+        congress.assetsMy && congress.assetsMy.forEach(function(asset) {
+            // console.log(asset);
+            // addressToOffset(asset);
+            showMarker(congress, asset, '');
+        });
+        // 가족
+        congress.assetsMyRelative && congress.assetsMyRelative.forEach(function(asset) {
+            // console.log(asset);
+            // addressToOffset(asset);
+            showMarker(congress, asset, '(' + asset.relative + ')');
+        }); 
+    });
+});
+
+const migration = function() {
+    console.log(congresses);
+    console.log(JSON.stringify(congresses));
+    axios.put('https://real-estate-g-default-rtdb.firebaseio.com/congresses.json', congresses);
+}
+
+const offset = function() {
+    axios.get('http://dapi.kakao.com/v2/local/search/keyword?query=서울특별시 동작구 사당동 태평빌라', {
+                headers: {
+                    Authorization: 'KakaoAK af42af0dc7cd046c2d38bef4284bb0e4'
+                }
+            }).then((response) => {
+                console.warn(response.data.documents[0].x);
+                console.warn(response.data.documents[0].y);
+            });
+}
+
+let mobileWidth = null;
+const webFunction = function(width, height) {
+    // alert(width);
+    // alert(height);
+    mobileWidth = width;
+    document.getElementById('map').style.width = width + 'px';
+    document.getElementById('map').style.height = height + 'px';
+    map.relayout();
+}
+
+const webFunctionSearch = function(show) {
+    document.getElementById('searchBar').style.display = show ? 'block' : 'none';    
+    document.getElementById('searchBarForm').style.width = mobileWidth * 0.8 + 'px';
+    document.getElementById('searchListParent').style.width = mobileWidth * 0.8 + 'px';
+};
+
+const show = function() {
+    mobileWidth = 300;
+    webFunctionSearch(true);
+};
+!window.ReactNativeWebView && show();
+
+const search = function(form) {
+    const searchInput = form['searchBarInput']
+    console.log(searchInput.value);
+    const searchListParent = document.getElementById('searchListParent');
+    searchListParent.innerHTML = '';
+    searchListParent.classList.add('active');
+    const searchListChild = document.getElementById('searchListChild');
+    for (let i = 0; i < 5; i++) {
+        const newSearchListChild = searchListChild.cloneNode(true);
+        searchListParent.appendChild(newSearchListChild);
+
+    }
+};
 </script>
