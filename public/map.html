@@ -24,6 +24,10 @@ body {
     overflow-x: hidden;
     overflow-y: scroll;
     box-sizing: border-box;
+    display: none;
+}
+.searchList.active {
+    display: block;
 }
 .searchList li {
     padding-left: 8px;
@@ -44,37 +48,9 @@ body {
             <form id="searchBarForm" onsubmit="event.preventDefault(); search(this);">
                 <input name="searchBarInput" id="searchBarInput" class="searchBarInput" type="text">
             </form>
-            <ul id="searchList" class="searchList">
-                <li>abbbbabbbbabbbbabbbbabbbbabbbbabbbbabbbbabbbbabbbbabbbbabbbb</li>
-                <li>abbbb</li>
-                <li>abbbb</li>
-                <li>abbbb</li>
-                <li>abbbb</li>
-                <li>abbbb</li>
-                <li>abbbb</li>
-                <li>abbbb</li>
-                <li>abbbb</li>
-                <li>abbbb</li>
-                <li>abbbb</li>
-                <li>abbbb</li>
-                <li>abbbb</li>
-                <li>abbbb</li>
-                <li>abbbb</li>
-                <li>abbbb</li>
-                <li>abbbb</li>
-                <li>abbbb</li>
-                <li>abbbb</li>
-                <li>abbbb</li>
-                <li>abbbb</li>
-                <li>abbbb</li>
-                <li>abbbb</li>
-                <li>abbbb</li>
-                <li>abbbb</li>
-                <li>abbbb</li>
-                <li>abbbb</li>
-                <li>abbbb</li>
-                <li>abbbb</li>
-                <li>abbbb</li>
+            <ul id="searchListParent" class="searchList"></ul>
+            <ul style="display: none;">
+                <li id="searchListChild"><spa>abc</spa></li>
             </ul>
         </div>
     </div>
@@ -250,7 +226,7 @@ const webFunction = function(width, height) {
 const webFunctionSearch = function(show) {
     document.getElementById('searchBar').style.display = show ? 'block' : 'none';    
     document.getElementById('searchBarForm').style.width = mobileWidth * 0.8 + 'px';
-    document.getElementById('searchList').style.width = mobileWidth * 0.8 + 'px';
+    document.getElementById('searchListParent').style.width = mobileWidth * 0.8 + 'px';
 };
 
 const show = function() {
@@ -261,6 +237,15 @@ const show = function() {
 
 const search = function(form) {
     const searchInput = form['searchBarInput']
-    console.log(searchInput);
+    console.log(searchInput.value);
+    const searchListParent = document.getElementById('searchListParent');
+    searchListParent.innerHTML = '';
+    searchListParent.classList.add('active');
+    const searchListChild = document.getElementById('searchListChild');
+    for (let i = 0; i < 5; i++) {
+        const newSearchListChild = searchListChild.cloneNode(true);
+        searchListParent.appendChild(newSearchListChild);
+
+    }
 };
 </script>
