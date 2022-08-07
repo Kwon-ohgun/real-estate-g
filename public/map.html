@@ -20,7 +20,7 @@ body {
     border-top: 0;
     list-style: none;
     padding-left: 0;
-    height: 300px;
+    min-height: 0;
     overflow-x: hidden;
     overflow-y: scroll;
     box-sizing: border-box;
@@ -50,7 +50,7 @@ body {
             </form>
             <ul id="searchListParent" class="searchList"></ul>
             <ul style="display: none;">
-                <li id="searchListChild"><spa>abc</spa></li>
+                <li id="searchListChild" onclick="searchMove(congress)"></li>
             </ul>
         </div>
     </div>
@@ -164,11 +164,14 @@ const showMarker = function(congress, asset, relative) {
          content: '<div style="width:300px;text-align:center;padding:16px;">' + congress.name + '(' + congress.team + ')' + relative + ': ' + asset.value + '</div>',
          removable: true
     });
-    kakao.maps.event.addListener(marker, 'click', function() {
+    var markerClick = function() {
       // 마커 위에 인포윈도우를 표시합니다
       infowindow.open(map, marker);  
       map.setCenter(coords);
-    });
+    }
+    kakao.maps.event.addListener(marker, 'click', markerClick);
+
+    return markerClick;
 }
 
 axios.get('https://real-estate-g-default-rtdb.firebaseio.com/congresses.json').then((response) => {
@@ -185,13 +188,13 @@ axios.get('https://real-estate-g-default-rtdb.firebaseio.com/congresses.json').t
         congress.assetsMy && congress.assetsMy.forEach(function(asset) {
             // console.log(asset);
             // addressToOffset(asset);
-            showMarker(congress, asset, '');
+            asset.markerClick = showMarker(congress, asset, '');
         });
         // 가족
         congress.assetsMyRelative && congress.assetsMyRelative.forEach(function(asset) {
             // console.log(asset);
             // addressToOffset(asset);
-            showMarker(congress, asset, '(' + asset.relative + ')');
+            asset.markerClick = showMarker(congress, asset, '(' + asset.relative + ')');
         }); 
     });
 });
@@ -242,10 +245,22 @@ const search = function(form) {
     searchListParent.innerHTML = '';
     searchListParent.classList.add('active');
     const searchListChild = document.getElementById('searchListChild');
-    for (let i = 0; i < 5; i++) {
+    console.log(congresses);
+    for (let i = 0; i < congresses.length; i++) {
+        const congress = congresses[i];
+        // 팀에서 못찾고 이름에서도 못찾고
+        if (!congress.team.includes(searchInput.value) && !congress.name.includes(searchInput.value)) {
+            continue;
+        }
         const newSearchListChild = searchListChild.cloneNode(true);
         searchListParent.appendChild(newSearchListChild);
-
+        newSearchListChild.congress = congress;
+        newSearchListChild.innerHTML = congress.team + '(' + congress.name + ')'
     }
 };
+
+const searchMove = function(congress) {
+    console.log(congress);
+    congress.assetsMyRelative[0].markerClick();
+}
 </script>
